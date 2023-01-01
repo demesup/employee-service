@@ -2,18 +2,17 @@ package org.demesup.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.Collection;
 
 @Entity
 @Data
-@NoArgsConstructor
+@Table
 public class Department implements Model{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "dep_id")
-    private int depId;
+    private int dep_id;
     @Basic
     @Column(name = "name")
     private String name;
@@ -26,7 +25,7 @@ public class Department implements Model{
     @Override
     public String toString() {
         return "Department{" +
-                "depId=" + depId +
+                "dep_id=" + dep_id +
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 '}';

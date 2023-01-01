@@ -1,10 +1,12 @@
 package org.demesup.model;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.util.function.Function;
 
 import static org.utils.Read.read;
+@Getter
 
 public enum DepartmentField implements Field {
     NAME(Department::getName) {
@@ -39,5 +41,4 @@ public enum DepartmentField implements Field {
 
     public abstract void setter(Department department);
 
-    public abstract <T extends Object> T valueFromUser();
 }

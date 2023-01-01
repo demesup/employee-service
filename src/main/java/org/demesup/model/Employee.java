@@ -2,12 +2,13 @@ package org.demesup.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@NoArgsConstructor
-public class Employee implements Model {
+@Table
+public class Employee
+//        extends PanacheEntity
+        implements Model {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "emp_id")
@@ -27,7 +28,24 @@ public class Employee implements Model {
     @Basic
     @Column(name = "email")
     private String email;
+    @Basic
+//    @Column(name = "dep_id")
+    @Column(name = "dep_id")
+    private Integer dep_id;
     @ManyToOne
-    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
+    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id", insertable = false, updatable = false)
     private Department department;
+
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "empId=" + empId +
+                ", name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", gender=" + gender +
+                ", salary=" + salary +
+                ", email='" + email + '\'' +
+                ", department=" + department +
+                '}';
+    }
 }

@@ -1,18 +1,17 @@
 package org.demesup.model;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
-import org.utils.Read;
+import org.demesup.controller.DepartmentController;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Function;
 
-import static org.demesup.controller.AppController.controller;
 import static org.utils.Patterns.askStringWhileDoesNotMatchToPattern;
 import static org.utils.Patterns.emailPattern;
 import static org.utils.Read.*;
 
-public enum EmployeeField implements Field{
+@Getter
+public enum EmployeeField implements Field {
     NAME(Employee::getName) {
         @Override
         public void setter(Employee employee) {
@@ -83,20 +82,11 @@ public enum EmployeeField implements Field{
         @SneakyThrows
         @Override
         public Department valueFromUser() {
-            controller.getAll(Department.class).forEach(System.out::println);
-            int id = Read.readNumber("Enter id");
-           return controller.getById(Department.class, id).orElseGet(() -> {
-                try {
-                    if (inputEqualsYes("Try again?")) {
-                        return valueFromUser();
-                    }
-                    Department department = new Department();
-                    Arrays.stream(DepartmentField.values()).forEach(f-> f.setter(department));
-                    return department;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            Department department;
+            do {
+                department = new DepartmentController().search();
+            } while (department == null);
+            return department;
         }
     };
     final Function<Employee, Object> getter;
@@ -107,5 +97,4 @@ public enum EmployeeField implements Field{
 
     public abstract void setter(Employee employee);
 
-    public abstract <T extends Object> T valueFromUser();
 }
