@@ -32,8 +32,8 @@ public class Employee
 //    @Column(name = "dep_id")
     @Column(name = "dep_id")
     private Integer dep_id;
-    @ManyToOne
-    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id", insertable = false, updatable = false)
+    @ManyToOne(targetEntity = Department.class, fetch = FetchType.EAGER)
+    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
     private Department department;
 
     @Override

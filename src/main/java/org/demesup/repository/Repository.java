@@ -50,7 +50,6 @@ public class Repository {
             transaction = session.beginTransaction();
 
             model = session.getReference(cl, id);
-
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
@@ -75,7 +74,12 @@ public class Repository {
     }
 
     private <T extends Model> String getStrQuery(Map<String, String> fieldValueMap, Class<T> cl) {
-        return fieldValueMap.entrySet().stream().map(entry -> entry.getKey() + " = '" + entry.getValue() + "'").collect(Collectors.joining(" and ", "select c from " + cl.getSimpleName() + " c where ", ""));
+        return fieldValueMap.entrySet().stream()
+                .map(entry -> entry.getKey() + " = '" + entry.getValue() + "'")
+                .collect(Collectors.joining(
+                        " and ",
+                        "select c from " + cl.getSimpleName() + " c where ",
+                        ""));
     }
 
 

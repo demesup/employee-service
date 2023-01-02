@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.demesup.controller.Controller;
 import org.demesup.controller.DepartmentController;
 import org.demesup.controller.EmployeeController;
+import org.demesup.controller.NoModelWithSuchParametersException;
 import org.demesup.model.Department;
 import org.demesup.model.Employee;
 import org.demesup.model.Model;
+import org.hibernate.ObjectNotFoundException;
 import org.utils.Read;
 import org.utils.exception.ExitException;
 
@@ -49,22 +51,29 @@ public class AppController {
         }
     }
 
-    public static void start() throws IOException {
+    public static void start() {
         try {
-            while (true) {
-                loop();
-            }
-        } catch (ExitException e) {
-            if (Read.inputEqualsYes("Continue?")) loop();
+            loop();
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            log.error(e.getMessage());
         } finally {
             finish();
         }
     }
 
     private static void loop() throws IOException {
-        Controller controller = readEnumValue(ControllerEnum.values(), "Enter number of entity").controller;
-        readEnumValue(Action.values(), "Enter number of action").action.accept(controller);
+        try {
+            while (true) {
+                Controller controller = readEnumValue(ControllerEnum.values(), "Enter number of entity").controller;
+                readEnumValue(Action.values(), "Enter number of action").action.accept(controller);
+            }
+        } catch (NoModelWithSuchParametersException | ObjectNotFoundException e) {
+            log.debug(e.getMessage());
+            start();
+        } catch (ExitException e) {
+            if (Read.inputEqualsYes("Continue?")) loop();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

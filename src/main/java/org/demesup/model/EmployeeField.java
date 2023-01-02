@@ -2,6 +2,7 @@ package org.demesup.model;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.demesup.AppController;
 import org.demesup.controller.DepartmentController;
 
 import java.util.function.Function;
@@ -84,7 +85,7 @@ public enum EmployeeField implements Field {
         public Department valueFromUser() {
             Department department;
             do {
-                department = new DepartmentController().search();
+                department = AppController.ControllerEnum.DEPARTMENT.getController().search();
             } while (department == null);
             return department;
         }

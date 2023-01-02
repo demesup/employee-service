@@ -1,6 +1,7 @@
 package org.demesup.controller;
 
 import org.demesup.AppController;
+import org.demesup.model.Department;
 import org.demesup.model.Field;
 import org.demesup.model.Model;
 import org.demesup.repository.Repository;
@@ -9,6 +10,7 @@ import org.utils.Utils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.utils.Patterns.askStringWhileDoesNotMatchToPattern;
@@ -34,10 +36,10 @@ public abstract class Controller {
                 .split("\\s")).map(Integer::parseInt).toList();
     }
 
-    protected abstract <T extends Model> T getByFields();
+    protected abstract <T extends Model> Optional<T> getByFields();
 
     protected abstract <T extends Model> List<T> getListByFields();
 
 
-    protected abstract <T extends Model> T getById();
+    protected abstract <T extends Model> Optional<T> getById();
 }

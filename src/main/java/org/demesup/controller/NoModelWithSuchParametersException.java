@@ -6,5 +6,6 @@ public class NoModelWithSuchParametersException extends RuntimeException {
     }
 
     public NoModelWithSuchParametersException() {
+        super("Model not found");
     }
 }
