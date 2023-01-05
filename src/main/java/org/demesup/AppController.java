@@ -4,12 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.demesup.controller.Controller;
-import org.demesup.controller.DepartmentController;
-import org.demesup.controller.EmployeeController;
-import org.demesup.controller.NoModelWithSuchParametersException;
-import org.demesup.model.Department;
-import org.demesup.model.Employee;
-import org.demesup.model.Model;
 import org.hibernate.ObjectNotFoundException;
 import org.utils.Read;
 import org.utils.exception.ExitException;
@@ -17,7 +11,6 @@ import org.utils.exception.ExitException;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import static org.demesup.HibernateUtil.finish;
 import static org.utils.Read.readEnumValue;
 
 @Slf4j
@@ -37,34 +30,20 @@ public class AppController {
         final Consumer<Controller> action;
     }
 
-    @Getter
-    public
-    enum ControllerEnum {
-        EMPLOYEE(Employee.class, new EmployeeController()),
-        DEPARTMENT(Department.class, new DepartmentController());
-        final Class<? extends Model> cl;
-        final Controller controller;
-
-        ControllerEnum(Class<? extends Model> cl, Controller controller) {
-            this.cl = cl;
-            this.controller = controller;
-        }
-    }
 
     public static void start() {
         try {
             loop();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(e.getMessage());
-        } finally {
-            finish();
+            e.printStackTrace();
         }
     }
 
     private static void loop() throws IOException {
         try {
             while (true) {
-                Controller controller = readEnumValue(ControllerEnum.values(), "Enter number of entity").controller;
+                Controller controller = readEnumValue(ModelType.values(), "Enter number of entity").controller;
                 readEnumValue(Action.values(), "Enter number of action").action.accept(controller);
             }
         } catch (NoModelWithSuchParametersException | ObjectNotFoundException e) {
@@ -73,7 +52,7 @@ public class AppController {
         } catch (ExitException e) {
             if (Read.inputEqualsYes("Continue?")) loop();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
         }
     }
 }

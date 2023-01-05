@@ -2,19 +2,23 @@ package org.demesup.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Data
 @Table
-public class Employee
-//        extends PanacheEntity
-        implements Model {
+@NamedEntityGraph(
+        name = "employee-graph",
+        attributeNodes = @NamedAttributeNode("department")
+)
+public class Employee implements Model {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "emp_id")
     private int empId;
     @Basic
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 30)
     private String name;
     @Basic
     @Column(name = "surname")
@@ -23,16 +27,13 @@ public class Employee
     @Column(name = "gender")
     private Object gender;
     @Basic
-    @Column(name = "salary")
-    private Integer salary;
+    @Column(name = "salary", precision = 2)
+    private Double salary;
     @Basic
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
-    @Basic
-//    @Column(name = "dep_id")
-    @Column(name = "dep_id")
-    private Integer dep_id;
-    @ManyToOne(targetEntity = Department.class, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST,CascadeType.MERGE})
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
     @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
     private Department department;
 

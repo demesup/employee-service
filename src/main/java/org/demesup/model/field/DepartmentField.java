@@ -1,7 +1,8 @@
-package org.demesup.model;
+package org.demesup.model.field;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.demesup.model.Department;
 
 import java.util.function.Function;
 

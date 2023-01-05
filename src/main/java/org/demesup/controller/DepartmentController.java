@@ -2,17 +2,15 @@ package org.demesup.controller;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.demesup.ModelType;
+import org.demesup.NoModelWithSuchParametersException;
 import org.demesup.model.Department;
-import org.demesup.model.DepartmentField;
+import org.demesup.model.field.DepartmentField;
 import org.hibernate.ObjectNotFoundException;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.demesup.AppController.Action.SEARCH;
 import static org.demesup.AppController.Action.UPDATE;
 import static org.utils.Read.*;
 import static org.utils.Utils.listWithTitle;
@@ -34,7 +32,7 @@ public class DepartmentController extends Controller {
 
     @Override
     public void read() {
-        log.debug(listWithTitle(repository.getAll(Department.class)));
+        log.debug(listWithTitle(repository.getAll(ModelType.DEPARTMENT)));
     }
 
     @Override
@@ -64,10 +62,10 @@ public class DepartmentController extends Controller {
 
     @SneakyThrows
     protected Optional<Department> getById() {
-        return repository.getById(Department.class, readPositiveNumber("Enter id"));
+        return repository.getById(ModelType.DEPARTMENT, Department.class, readPositiveNumber("Enter id"));
     }
 
-@Override
+    @Override
     public Department search() {
         Department department = getDepartment();
         log.debug(department.toString());
@@ -77,23 +75,9 @@ public class DepartmentController extends Controller {
     @Override
     @SneakyThrows
     protected Optional<Department> getByFields() {
-        var result = getListByFields();
-        if (result.size() == 1) return Optional.of(result.get(0));
+        var result = getListByFields(ModelType.DEPARTMENT, Department.class);
+        if (result.size() == 1) return Optional.of((Department) result.get(0));
         int index = readNumber(result.size(), "Enter index");
-        return Optional.of(result.get(index));
-    }
-
-    @Override
-    @SneakyThrows
-    protected List<Department> getListByFields() {
-        var indexes = getIndexes(SEARCH, DepartmentField.values());
-        Map<String, String> map = Arrays.stream(DepartmentField.values())
-                .filter(f -> indexes.contains(f.ordinal()))
-                .collect(Collectors.toMap(
-                        field -> field.toString().toLowerCase(),
-                        field -> field.valueFromUser().toString()));
-        List<Department> departments = repository.getByFields(Department.class, map);
-        if (departments.isEmpty()) throw new NoModelWithSuchParametersException(map.toString());
-        return departments;
+        return Optional.of((Department) result.get(index));
     }
 }

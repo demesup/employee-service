@@ -1,9 +1,10 @@
-package org.demesup.model;
+package org.demesup.model.field;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.demesup.AppController;
-import org.demesup.controller.DepartmentController;
+import org.demesup.ModelType;
+import org.demesup.model.Department;
+import org.demesup.model.Employee;
 
 import java.util.function.Function;
 
@@ -57,8 +58,8 @@ public enum EmployeeField implements Field {
 
         @SneakyThrows
         @Override
-        public Integer valueFromUser() {
-            return readPositiveNumber("Enter salary");
+        public Double valueFromUser() {
+            return (double) readPositiveNumber("Enter salary");
         }
     },
     EMAIL(Employee::getEmail) {
@@ -85,7 +86,7 @@ public enum EmployeeField implements Field {
         public Department valueFromUser() {
             Department department;
             do {
-                department = AppController.ControllerEnum.DEPARTMENT.getController().search();
+                department = ModelType.DEPARTMENT.getController().search();
             } while (department == null);
             return department;
         }

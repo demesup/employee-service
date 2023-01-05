@@ -1,25 +1,25 @@
 package org.demesup;
 
-import jakarta.persistence.EntityManager;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 public class HibernateUtil {
-    public static SessionFactory sessionFactory;
-    static EntityManager entityManager;
 
+    private static final SessionFactory sessionFactory = buildSessionFactory();
 
-    static {
-        sessionFactory = new Configuration().configure().buildSessionFactory();
-        entityManager = sessionFactory.createEntityManager();
+    private static SessionFactory buildSessionFactory() {
+        try {
+            // Create the SessionFactory from hibernate.cfg.xml
+            return new Configuration()
+                    .configure()
+                    .buildSessionFactory();
+        } catch (Throwable ex) {
+            System.err.println("Initial SessionFactory creation failed." + ex);
+            throw new ExceptionInInitializerError(ex);
+        }
     }
 
-    public static Session session(){
-        return sessionFactory.openSession();
-    }
-
-    public static void finish(){
-        sessionFactory.close();
+    public static SessionFactory getSessionFactory() {
+        return sessionFactory;
     }
 }

@@ -2,21 +2,18 @@ package org.demesup.controller;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.demesup.model.Department;
+import org.demesup.ModelType;
+import org.demesup.NoModelWithSuchParametersException;
 import org.demesup.model.Employee;
-import org.demesup.model.EmployeeField;
-import org.demesup.model.Model;
+import org.demesup.model.field.EmployeeField;
 import org.hibernate.ObjectNotFoundException;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.demesup.AppController.Action.SEARCH;
 import static org.demesup.AppController.Action.UPDATE;
 import static org.utils.Read.*;
+import static org.utils.Utils.listInSeparatedLines;
 import static org.utils.Utils.listWithTitle;
 
 @Slf4j
@@ -36,7 +33,7 @@ public class EmployeeController extends Controller {
 
     @Override
     public void read() {
-        log.debug(listWithTitle(repository.getAll(Employee.class)));
+        log.debug(listWithTitle(repository.getAll(ModelType.EMPLOYEE)));
     }
 
     @Override
@@ -67,7 +64,7 @@ public class EmployeeController extends Controller {
 
     @SneakyThrows
     protected Optional<Employee> getById() {
-        return repository.getById(Employee.class, readPositiveNumber("Enter id"));
+        return repository.getById(ModelType.EMPLOYEE, Employee.class, readPositiveNumber("Enter id"));
     }
 
 
@@ -81,24 +78,10 @@ public class EmployeeController extends Controller {
     @Override
     @SneakyThrows
     protected Optional<Employee> getByFields() {
-        var result = getListByFields();
-        if (result.size() == 1) return Optional.of(result.get(0));
+        var result = getListByFields(ModelType.EMPLOYEE, Employee.class);
+        log.debug(listInSeparatedLines(result));
+        if (result.size() == 1) return Optional.of((Employee) result.get(0));
         int index = readNumber(result.size(), "Enter index");
-        return Optional.of((result.get(index)));
-    }
-
-    @Override
-    @SneakyThrows
-    protected List<Employee> getListByFields() {
-        var indexes = getIndexes(SEARCH, EmployeeField.values());
-        Map<String, String> map = Arrays.stream(EmployeeField.values())
-                .filter(f -> indexes.contains(f.ordinal()))
-                .collect(Collectors.toMap(
-                        field -> field.toString().toLowerCase(),
-                        field -> field.valueFromUser().toString()));
-
-        List<Employee> employees = repository.getByFields(Employee.class, map);
-        if (employees.isEmpty()) throw new NoModelWithSuchParametersException(map.toString());
-        return employees;
+        return Optional.of(result.get(index));
     }
 }

@@ -1,4 +1,4 @@
-package org.demesup.controller;
+package org.demesup;
 
 public class NoModelWithSuchParametersException extends RuntimeException {
     public NoModelWithSuchParametersException(String string) {

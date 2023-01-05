@@ -24,9 +24,9 @@
         </encoder>
     </appender>
 
-    <logger name="org.hibernate.type" level="warn" />
-    <logger name="org.hibernate" level="warn" />
-    <logger name="org.hibernate." level="warn" />
+<!--    <logger name="org.hibernate.type" level="warn" />-->
+<!--    <logger name="org.hibernate" level="warn" />-->
+<!--    <logger name="org.hibernate." level="warn" />-->
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
