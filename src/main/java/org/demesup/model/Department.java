@@ -1,7 +1,10 @@
 package org.demesup.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -14,7 +17,6 @@ import java.util.Collection;
         name = "department-graph",
         attributeNodes = @NamedAttributeNode("employeesByDepId")
 )
-@NamedQuery(name = "department_by_id", query = "from Department where dep_id = :dep_id")
 @RequiredArgsConstructor
 @NoArgsConstructor
 public class Department implements Model {
@@ -30,7 +32,8 @@ public class Department implements Model {
     @Basic
     @Column(name = "location", nullable = false)
     private String location;
-    @OneToMany(mappedBy = "department", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "department")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Collection<Employee> employeesByDepId;
 
     @Override

@@ -1,12 +1,12 @@
 package org.demesup.controller;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.demesup.AppController;
 import org.demesup.NoModelWithSuchParametersException;
-import org.demesup.model.Employee;
 import org.demesup.model.Model;
 import org.demesup.model.field.Field;
-import org.demesup.repository.Repository;
+import org.demesup.repository.RepositoryImpl;
 import org.hibernate.ObjectNotFoundException;
 import org.utils.Read;
 import org.utils.Utils;
@@ -21,9 +21,12 @@ import static org.demesup.AppController.Action.*;
 import static org.demesup.ModelType.modelTypeMap;
 import static org.utils.Patterns.askStringWhileDoesNotMatchToPattern;
 import static org.utils.Read.inputEqualsYes;
+import static org.utils.Read.readNumber;
+import static org.utils.Utils.listInSeparatedLines;
 
+@Slf4j
 public abstract class Controller {
-    public static Repository repository = new Repository();
+    public static RepositoryImpl repository = new RepositoryImpl();
 
     public abstract <T extends Model> T create();
 
@@ -46,7 +49,7 @@ public abstract class Controller {
     }
 
     @SneakyThrows
-    protected <T extends Model> void update(Class<T> cl, Field[] fields){
+    protected <T extends Model> void update(Class<T> cl, Field[] fields) {
         String entity = cl.getSimpleName();
         switch (Read.readNumber(3, "Enter:" +
                 "\n\t0-update one " + entity +
@@ -67,17 +70,19 @@ public abstract class Controller {
 
     public abstract void update();
 
-    public abstract <T extends Model> T search();
+    public <T extends Model> T search() {
+        T model = getModel();
+        log.debug(model.toString());
+        return model;
+    }
 
     static List<Integer> getIndexes(AppController.Action action, Field[] fields) throws IOException {
-        System.out.println(Utils.numberedArray(fields));
+        log.debug(Utils.numberedArray(fields));
         return Arrays.stream(askStringWhileDoesNotMatchToPattern(
                 Pattern.compile("^\\s?\\d(\\s\\d)?\\s?"),
                 "Enter indexes of fields to " + action.name() + " by (separated by space). Example: 0 2 4 7")
                 .split("\\s")).map(Integer::parseInt).toList();
     }
-
-    protected abstract <T extends Model> Optional<T> getOneByFields();
 
     @SneakyThrows
     protected <T extends Model> List<T> getListByFields(Class<T> cl) {
@@ -127,8 +132,19 @@ public abstract class Controller {
 
     protected abstract <T extends Model> Optional<T> getById();
 
+    protected abstract <T extends Model> Optional<T> getOneByFields();
+
     @SneakyThrows
-    protected  <T extends Model> T getModel(){
+    protected <T extends Model> Optional<T> getOneByFields(Class<T> cl) {
+        var result = getListByFields(cl);
+        if (result.size() == 1) return Optional.of(result.get(0));
+        log.debug(listInSeparatedLines(result));
+        int index = readNumber(result.size(), "Enter index");
+        return Optional.of(result.get(index));
+    }
+
+    @SneakyThrows
+    protected <T extends Model> T getModel() {
         try {
             Optional<T> optional =
                     inputEqualsYes("Do you know id?") ? getById() : getOneByFields();
@@ -138,9 +154,10 @@ public abstract class Controller {
             throw new NoModelWithSuchParametersException();
         }
     }
+
     @SneakyThrows
-    protected <T extends Model> T getUpdated(T model, Field[] fields){
-        getIndexes(UPDATE, fields).stream().map(i-> fields[i]).forEach(f-> f.setter(model));
+    protected <T extends Model> T getUpdated(T model, Field[] fields) {
+        getIndexes(UPDATE, fields).stream().map(i -> fields[i]).forEach(f -> f.setter(model));
         return model;
     }
 }

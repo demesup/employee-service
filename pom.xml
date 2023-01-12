@@ -30,12 +30,6 @@
             <artifactId>logback-classic</artifactId>
             <version>1.4.5</version>
         </dependency>
-
-<!--         <dependency>-->
-<!--            <groupId>io.quarkus</groupId>-->
-<!--            <artifactId>quarkus-hibernate-search-orm-elasticsearch</artifactId>-->
-<!--            <version>2.15.1.Final</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
@@ -47,7 +41,6 @@
             <artifactId>utils</artifactId>
             <version>3.0-SNAPSHOT</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api -->
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>

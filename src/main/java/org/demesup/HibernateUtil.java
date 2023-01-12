@@ -12,13 +12,15 @@ public class HibernateUtil {
         sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
     }
 
-    public static SessionFactory getSessionFactory(){
+    public static SessionFactory getSessionFactory() {
         return sessionFactory;
     }
     public static Session getSession() {
         Session session;
         if (threadLocal.get() == null) {
             session = sessionFactory.openSession();
+            System.out.println(session.isOpen());
+            System.out.println(session.isDirty());
             threadLocal.set(session);
         } else {
             session = threadLocal.get();

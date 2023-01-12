@@ -14,9 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table
 @NamedEntityGraph(
         name = "employee-graph",
-        attributeNodes = @NamedAttributeNode("department")
-)
-@NamedQuery(name = "employee_by_id", query = "from Employee where empId = :emp_id")
+        attributeNodes = @NamedAttributeNode("department"))
 @RequiredArgsConstructor
 @NoArgsConstructor
 public class Employee implements Model {
@@ -29,7 +27,7 @@ public class Employee implements Model {
     @NonNull
     private String name;
     @Basic
-    @Column(name = "surname")
+    @Column(name = "surname", nullable = false)
     @NonNull
     private String surname;
     @Enumerated(EnumType.STRING)
@@ -44,7 +42,7 @@ public class Employee implements Model {
     @Column(name = "email", unique = true, nullable = false)
     @NonNull
     private String email;
-    @ManyToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @OnDelete(action = OnDeleteAction.NO_ACTION)
     @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
     @NonNull
