@@ -2,6 +2,10 @@ package org.demesup.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.demesup.model.field.Gender;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -12,6 +16,9 @@ import org.hibernate.annotations.OnDeleteAction;
         name = "employee-graph",
         attributeNodes = @NamedAttributeNode("department")
 )
+@NamedQuery(name = "employee_by_id", query = "from Employee where empId = :emp_id")
+@RequiredArgsConstructor
+@NoArgsConstructor
 public class Employee implements Model {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
@@ -19,22 +26,28 @@ public class Employee implements Model {
     private int empId;
     @Basic
     @Column(name = "name", nullable = false, length = 30)
+    @NonNull
     private String name;
     @Basic
     @Column(name = "surname")
+    @NonNull
     private String surname;
-    @Basic
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private Object gender;
+    @NonNull
+    private Gender gender;
     @Basic
-    @Column(name = "salary", precision = 2)
-    private Double salary;
+    @Column(name = "salary")
+    @NonNull
+    private Integer salary;
     @Basic
     @Column(name = "email", unique = true, nullable = false)
+    @NonNull
     private String email;
     @ManyToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST,CascadeType.MERGE})
     @OnDelete(action = OnDeleteAction.NO_ACTION)
     @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
+    @NonNull
     private Department department;
 
     @Override

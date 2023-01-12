@@ -18,36 +18,31 @@ import java.util.Map;
 
 @Getter
 public enum ModelType {
-    EMPLOYEE(new EmployeeController(), Employee.class, EmployeeField.values()),
-    DEPARTMENT(new DepartmentController(), Department.class, DepartmentField.values());
+    EMPLOYEE(new EmployeeController(), EmployeeField.values()),
+    DEPARTMENT(new DepartmentController(), DepartmentField.values());
     final Controller controller;
-    final Class<? extends Model> cl;
     final Field[] fields;
+    public static final Map<Class<? extends Model>, ModelType> modelTypeMap = Map.of(
+            Employee.class, ModelType.EMPLOYEE,
+            Department.class, ModelType.DEPARTMENT
+    );
 
-    <T extends Model> ModelType(Controller controller, Class<? extends Model> cl, Field[] values) {
+    ModelType(Controller controller, Field[] values) {
         this.controller = controller;
-        this.cl = cl;
         this.fields = values;
     }
-    public static Map<Class<? extends Model>, Map> hintsMap = new HashMap<>();
-    static {
-        hintsMap.put(EMPLOYEE.cl, EMPLOYEE.getHints());
-        hintsMap.put(DEPARTMENT.cl, DEPARTMENT.getHints());
-    }
-    public Map getHints() {
+
+    public Map<String, Object> getHints() {
         EntityGraph<?> graph = getEntityGraph();
 
-        Map hints = new HashMap();
-        hints.put("javax.persistence.fetchgraph", graph);
+        Map<String, Object> hints = new HashMap<>();
+        hints.put("jakarta.persistence.fetchgraph", graph);
         return hints;
     }
 
     public EntityGraph<?> getEntityGraph() {
-        EntityManager entityManager = HibernateUtil.getSessionFactory().createEntityManager();
-        return entityManager.getEntityGraph(this.cl.getSimpleName().toLowerCase() + "-graph");
-    }
-
-    public String hint1Parameter() {
-        return "javax.persistence.fetchgraph";
+        try (EntityManager entityManager = HibernateUtil.getSessionFactory().createEntityManager()) {
+            return entityManager.getEntityGraph(this.toString().toLowerCase() + "-graph");
+        }
     }
 }

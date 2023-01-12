@@ -2,7 +2,6 @@ package org.demesup.controller;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.demesup.ModelType;
 import org.demesup.NoModelWithSuchParametersException;
 import org.demesup.model.Employee;
 import org.demesup.model.field.EmployeeField;
@@ -11,7 +10,6 @@ import org.hibernate.ObjectNotFoundException;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static org.demesup.AppController.Action.UPDATE;
 import static org.utils.Read.*;
 import static org.utils.Utils.listInSeparatedLines;
 import static org.utils.Utils.listWithTitle;
@@ -19,42 +17,35 @@ import static org.utils.Utils.listWithTitle;
 @Slf4j
 public class EmployeeController extends Controller {
     @Override
-    public void create() {
+    public Employee create() {
         Employee employee = new Employee();
-        Arrays.stream(EmployeeField.values()).forEach(f -> f.setter(employee));
+        Arrays.stream(EmployeeField.values()).forEach(f -> f.set(employee));
         repository.save(employee);
+        return employee;
     }
 
     @Override
     public void delete() {
-        Employee employee = search();
-        repository.delete(employee);
+       delete(Employee.class);
     }
 
     @Override
     public void read() {
-        log.debug(listWithTitle(repository.getAll(ModelType.EMPLOYEE)));
+        log.debug(listWithTitle(repository.getAll(Employee.class)));
     }
 
     @Override
     @SneakyThrows
     public void update() {
-        Employee employee = search();
-        repository.update(update(employee));
+        update(Employee.class, EmployeeField.values());
     }
 
     @SneakyThrows
-    protected Employee update(Employee employee) {
-        var indexes = getIndexes(UPDATE, EmployeeField.values());
-        Arrays.stream(EmployeeField.values()).filter(f -> indexes.contains(f.ordinal())).forEach(f -> f.setter(employee));
-        return employee;
-    }
-
-    @SneakyThrows
-    private Employee getEmployee() {
+    @Override
+    protected Employee getModel() {
         try {
             Optional<Employee> optional =
-                    inputEqualsYes("Do you know id of employee to update?") ? getById() : getByFields();
+                    inputEqualsYes("Do you know id of employee?") ? getById() : getOneByFields();
             if (optional.isEmpty()) throw new NoModelWithSuchParametersException();
             return optional.get();
         } catch (ObjectNotFoundException e) {
@@ -64,23 +55,23 @@ public class EmployeeController extends Controller {
 
     @SneakyThrows
     protected Optional<Employee> getById() {
-        return repository.getById(ModelType.EMPLOYEE, Employee.class, readPositiveNumber("Enter id"));
+        return repository.getById(Employee.class, readPositiveNumber("Enter id"));
     }
 
 
     @Override
     public Employee search() {
-        Employee employee = getEmployee();
+        Employee employee = getModel();
         log.debug(employee.toString());
         return employee;
     }
 
     @Override
     @SneakyThrows
-    protected Optional<Employee> getByFields() {
-        var result = getListByFields(ModelType.EMPLOYEE, Employee.class);
+    protected Optional<Employee> getOneByFields() {
+        var result = getListByFields(Employee.class);
+        if (result.size() == 1) return Optional.of(result.get(0));
         log.debug(listInSeparatedLines(result));
-        if (result.size() == 1) return Optional.of((Employee) result.get(0));
         int index = readNumber(result.size(), "Enter index");
         return Optional.of(result.get(index));
     }

@@ -1,25 +1,41 @@
 package org.demesup;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 public class HibernateUtil {
+    private static final ThreadLocal<Session> threadLocal = new ThreadLocal<>();
 
-    private static final SessionFactory sessionFactory = buildSessionFactory();
+    private static SessionFactory sessionFactory = null;
+    static {
+        sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
+    }
 
-    private static SessionFactory buildSessionFactory() {
-        try {
-            // Create the SessionFactory from hibernate.cfg.xml
-            return new Configuration()
-                    .configure()
-                    .buildSessionFactory();
-        } catch (Throwable ex) {
-            System.err.println("Initial SessionFactory creation failed." + ex);
-            throw new ExceptionInInitializerError(ex);
+    public static SessionFactory getSessionFactory(){
+        return sessionFactory;
+    }
+    public static Session getSession() {
+        Session session;
+        if (threadLocal.get() == null) {
+            session = sessionFactory.openSession();
+            threadLocal.set(session);
+        } else {
+            session = threadLocal.get();
+        }
+        return session;
+    }
+
+    public static void closeSession() {
+        Session session;
+        if (threadLocal.get() != null) {
+            session = threadLocal.get();
+            session.close();
+            threadLocal.remove();
         }
     }
 
-    public static SessionFactory getSessionFactory() {
-        return sessionFactory;
+    public static void closeSessionFactory() {
+        sessionFactory.close();
     }
 }

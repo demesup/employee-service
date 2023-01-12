@@ -3,8 +3,10 @@ package org.demesup.model.field;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.demesup.ModelType;
+import org.demesup.controller.Controller;
 import org.demesup.model.Department;
 import org.demesup.model.Employee;
+import org.demesup.model.Model;
 
 import java.util.function.Function;
 
@@ -16,7 +18,7 @@ import static org.utils.Read.*;
 public enum EmployeeField implements Field {
     NAME(Employee::getName) {
         @Override
-        public void setter(Employee employee) {
+        public void set(Employee employee) {
             employee.setName(this.valueFromUser());
         }
 
@@ -28,7 +30,7 @@ public enum EmployeeField implements Field {
     },
     SURNAME(Employee::getSurname) {
         @Override
-        public void setter(Employee employee) {
+        public void set(Employee employee) {
             employee.setSurname(this.valueFromUser());
         }
 
@@ -40,7 +42,7 @@ public enum EmployeeField implements Field {
     },
     GENDER(Employee::getGender) {
         @Override
-        public void setter(Employee employee) {
+        public void set(Employee employee) {
             employee.setGender(this.valueFromUser());
         }
 
@@ -52,19 +54,19 @@ public enum EmployeeField implements Field {
     },
     SALARY(Employee::getSalary) {
         @Override
-        public void setter(Employee employee) {
+        public void set(Employee employee) {
             employee.setSalary(this.valueFromUser());
         }
 
         @SneakyThrows
         @Override
-        public Double valueFromUser() {
-            return (double) readPositiveNumber("Enter salary");
+        public Integer valueFromUser() {
+            return readPositiveNumber("Enter salary");
         }
     },
     EMAIL(Employee::getEmail) {
         @Override
-        public void setter(Employee employee) {
+        public void set(Employee employee) {
             employee.setEmail(this.valueFromUser());
         }
 
@@ -76,19 +78,26 @@ public enum EmployeeField implements Field {
     },
     DEPARTMENT(Employee::getDepartment) {
         @Override
-        public void setter(Employee employee) {
-
+        public void set(Employee employee) {
             employee.setDepartment(this.valueFromUser());
         }
 
         @SneakyThrows
         @Override
         public Department valueFromUser() {
-            Department department;
-            do {
-                department = ModelType.DEPARTMENT.getController().search();
-            } while (department == null);
-            return department;
+            try {
+                Department department;
+                Controller controller = ModelType.DEPARTMENT.getController();
+                controller.read();
+                if (inputEqualsYes("Choose an existing department?")) {
+                    department = controller.search();
+                } else department = controller.create();
+                return department;
+            } catch (Exception e) {
+                if (inputEqualsYes("Try again?")) {
+                    return valueFromUser();
+                } else throw new RuntimeException(e);
+            }
         }
     };
     final Function<Employee, Object> getter;
@@ -97,6 +106,12 @@ public enum EmployeeField implements Field {
         this.getter = getter;
     }
 
-    public abstract void setter(Employee employee);
+    public abstract void set(Employee employee);
 
+    @Override
+    public <T extends Model> void setter(T model) {
+        if (!(model instanceof Employee)) throw new RuntimeException("Notify the developer");
+        set((Employee) model);
+
+    }
 }

@@ -4,12 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.demesup.controller.Controller;
+import org.demesup.model.Model;
 import org.hibernate.ObjectNotFoundException;
 import org.utils.Read;
 import org.utils.exception.ExitException;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.utils.Read.readEnumValue;
 
@@ -28,16 +31,22 @@ public class AppController {
             throw new ExitException();
         });
         final Consumer<Controller> action;
+        public static final Map<Action, Function<Class<? extends Model>, String>> queryStartMap = Map.of(
+                UPDATE, cl -> "update " + cl.getSimpleName() + " c where c.",
+                SEARCH, cl -> "select c from " + cl.getSimpleName() + " c where c.",
+                DELETE, cl -> "delete from " + cl.getSimpleName() + " c where c."
+        );
     }
 
 
     public static void start() {
+        log.info("Controller started session");
         try {
             loop();
         } catch (Throwable e) {
             log.error(e.getMessage());
-            e.printStackTrace();
         }
+        log.info("Controller ended session");
     }
 
     private static void loop() throws IOException {
@@ -48,7 +57,7 @@ public class AppController {
             }
         } catch (NoModelWithSuchParametersException | ObjectNotFoundException e) {
             log.debug(e.getMessage());
-            start();
+            loop();
         } catch (ExitException e) {
             if (Read.inputEqualsYes("Continue?")) loop();
         } catch (Exception e) {
