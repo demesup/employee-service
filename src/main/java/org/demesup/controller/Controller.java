@@ -6,7 +6,7 @@ import org.demesup.AppController;
 import org.demesup.NoModelWithSuchParametersException;
 import org.demesup.model.Model;
 import org.demesup.model.field.Field;
-import org.demesup.repository.RepositoryImpl;
+import org.demesup.repository.Repository;
 import org.hibernate.ObjectNotFoundException;
 import org.utils.Read;
 import org.utils.Utils;
@@ -26,7 +26,7 @@ import static org.utils.Utils.listInSeparatedLines;
 
 @Slf4j
 public abstract class Controller {
-    public static RepositoryImpl repository = new RepositoryImpl();
+    public static Repository repository = new Repository();
 
     public abstract <T extends Model> T create();
 

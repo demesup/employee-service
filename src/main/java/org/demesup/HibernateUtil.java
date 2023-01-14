@@ -1,5 +1,6 @@
 package org.demesup;
 
+import jakarta.persistence.EntityManager;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -15,12 +16,10 @@ public class HibernateUtil {
     public static SessionFactory getSessionFactory() {
         return sessionFactory;
     }
-    public static Session getSession() {
+    public static Session session() {
         Session session;
         if (threadLocal.get() == null) {
             session = sessionFactory.openSession();
-            System.out.println(session.isOpen());
-            System.out.println(session.isDirty());
             threadLocal.set(session);
         } else {
             session = threadLocal.get();
@@ -28,16 +27,7 @@ public class HibernateUtil {
         return session;
     }
 
-    public static void closeSession() {
-        Session session;
-        if (threadLocal.get() != null) {
-            session = threadLocal.get();
-            session.close();
-            threadLocal.remove();
-        }
-    }
-
-    public static void closeSessionFactory() {
+    public static void finish() {
         sessionFactory.close();
     }
 }
