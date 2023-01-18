@@ -1,75 +1,68 @@
 package org.demesup.model;
 
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Entity
-public class Department  implements Model{
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Data
+@Table
+@NamedEntityGraph(
+        name = "department-graph",
+        attributeNodes = @NamedAttributeNode("employeesByDepId")
+)
+@RequiredArgsConstructor
+@NoArgsConstructor
+public class Department implements Model {
     @Id
-    @Column(name = "id")
-    private int id;
+    @Column(name = "dep_id")
+    @GeneratedValue(generator = "sequence-generator")
+    @GenericGenerator(
+            name = "sequence-generator",
+            strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
+            parameters = {
+                    @org.hibernate.annotations.Parameter(name = "sequence_name", value = "user_sequence"),
+                    @org.hibernate.annotations.Parameter(name = "initial_value", value = "1"),
+                    @org.hibernate.annotations.Parameter(name = "increment_size", value = "1")
+            }
+    )
+    private int dep_id;
+    @NonNull
     @Basic
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
+    @NonNull
     @Basic
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     private String location;
-    @OneToMany(mappedBy = "departmentByDepId")
-    private Collection<Employee> employeesById;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    @OneToMany(mappedBy = "department")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Collection<Employee> employeesByDepId;
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Department that = (Department) o;
-
-        if (id != that.id) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (location != null ? !location.equals(that.location) : that.location != null) return false;
-
-        return true;
+    public String toString() {
+        return "Department{" +
+                "dep_id=" + dep_id +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                '}';
     }
 
-    @Override
-    public int hashCode() {
-        int result = id;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (location != null ? location.hashCode() : 0);
-        return result;
+    public String moreInfo() {
+        String employees = employeesByDepId.isEmpty() ? "no employees" : employeesByDepId.stream()
+                .map(e -> e.getName() + " " + e.getSurname())
+                .collect(Collectors.joining("}\n\t{", "\n\t{", "}"));
+        return "Department{" +
+                "dep_id=" + dep_id +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                ", employees: " + employees +
+                '}';
     }
 
-    public Collection<Employee> getEmployeesById() {
-        return employeesById;
-    }
-
-    public void setEmployeesById(Collection<Employee> employeesById) {
-        this.employeesById = employeesById;
-    }
 }

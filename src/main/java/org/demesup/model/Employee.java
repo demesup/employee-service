@@ -1,126 +1,74 @@
 package org.demesup.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.demesup.model.field.Gender;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.Parameter;
 
 @Entity
-public class Employee implements Model{
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Data
+@Table
+@NamedEntityGraph(
+        name = "employee-graph",
+        attributeNodes = @NamedAttributeNode("department"))
+@RequiredArgsConstructor
+@NoArgsConstructor
+public class Employee implements Model {
     @Id
-    @Column(name = "id")
-    private int id;
+    @Column(name = "emp_id")
+    @GeneratedValue(generator = "sequence-generator")
+    @GenericGenerator(
+            name = "sequence-generator",
+            strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
+            parameters = {
+                    @Parameter(name = "sequence_name", value = "user_sequence"),
+                    @Parameter(name = "initial_value", value = "1"),
+                    @Parameter(name = "increment_size", value = "1")
+            }
+    )
+    private int empId;
     @Basic
-    @Column(name = "name")
+    @Column(name = "name", nullable = false, length = 30)
+    @NonNull
     private String name;
     @Basic
-    @Column(name = "surname")
+    @Column(name = "surname", nullable = false)
+    @NonNull
     private String surname;
-    @Basic
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender")
-    private String gender;
+    @NonNull
+    private Gender gender;
     @Basic
     @Column(name = "salary")
+    @NonNull
     private Integer salary;
     @Basic
-    @Column(name = "email")
+    @Column(name = "email", unique = true, nullable = false)
+    @NonNull
     private String email;
-    @Basic
-    @Column(name = "dep_id")
-    private Integer depId;
-    @ManyToOne
-    @JoinColumn(name = "dep_id", referencedColumnName = "id")
-    private Department departmentByDepId;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public Integer getSalary() {
-        return salary;
-    }
-
-    public void setSalary(Integer salary) {
-        this.salary = salary;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Integer getDepId() {
-        return depId;
-    }
-
-    public void setDepId(Integer depId) {
-        this.depId = depId;
-    }
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OnDelete(action = OnDeleteAction.NO_ACTION)
+    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
+    @NonNull
+    private Department department;
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Employee employee = (Employee) o;
-
-        if (id != employee.id) return false;
-        if (name != null ? !name.equals(employee.name) : employee.name != null) return false;
-        if (surname != null ? !surname.equals(employee.surname) : employee.surname != null) return false;
-        if (gender != null ? !gender.equals(employee.gender) : employee.gender != null) return false;
-        if (salary != null ? !salary.equals(employee.salary) : employee.salary != null) return false;
-        if (email != null ? !email.equals(employee.email) : employee.email != null) return false;
-        if (depId != null ? !depId.equals(employee.depId) : employee.depId != null) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (surname != null ? surname.hashCode() : 0);
-        result = 31 * result + (gender != null ? gender.hashCode() : 0);
-        result = 31 * result + (salary != null ? salary.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + (depId != null ? depId.hashCode() : 0);
-        return result;
-    }
-
-    public Department getDepartmentByDepId() {
-        return departmentByDepId;
-    }
-
-    public void setDepartmentByDepId(Department departmentByDepId) {
-        this.departmentByDepId = departmentByDepId;
+    public String toString() {
+        return "Employee{" +
+                "empId=" + empId +
+                ", name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", gender=" + gender +
+                ", salary=" + salary +
+                ", email='" + email + '\'' +
+                ", department=" + department +
+                '}';
     }
 }
