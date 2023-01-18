@@ -32,9 +32,9 @@ public class AppController {
         });
         final Consumer<Controller> action;
         public static final Map<Action, Function<Class<? extends Model>, String>> queryStartMap = Map.of(
-                UPDATE, cl -> "update " + cl.getSimpleName() + " where ",
-                SEARCH, cl -> "select c from " + cl.getSimpleName() + " c where c.",
-                DELETE, cl -> "delete from " + cl.getSimpleName() + " where "
+                UPDATE, cl -> "update " + cl.getSimpleName() + " c where",
+                SEARCH, cl -> "select * from " + cl.getSimpleName() + " where",
+                DELETE, cl -> "delete from " + cl.getSimpleName() + " c where"
         );
     }
 
@@ -62,6 +62,8 @@ public class AppController {
             if (Read.inputEqualsYes("Continue?")) loop();
         } catch (Exception e) {
             log.error(e.getMessage());
+        }finally {
+            HibernateUtil.finish();
         }
     }
 }

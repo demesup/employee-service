@@ -1,14 +1,12 @@
 package org.demesup.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -44,4 +42,17 @@ public class Department implements Model {
                 ", location='" + location + '\'' +
                 '}';
     }
+
+    public String moreInfo() {
+        return "Department{" +
+                "dep_id=" + dep_id +
+                ", name='" + name + '\'' +
+                ", location='" + location + '\'' +
+                ", employees: " +
+                employeesByDepId.stream()
+                        .map(e -> e.getName() + " " + e.getSurname())
+                        .collect(Collectors.joining("}\n\t{", "\n\t{", "}")) +
+                '}';
+    }
+
 }

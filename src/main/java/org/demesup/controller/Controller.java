@@ -13,6 +13,7 @@ import org.utils.Utils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -86,49 +87,47 @@ public abstract class Controller {
 
     @SneakyThrows
     protected <T extends Model> List<T> getListByFields(Class<T> cl) {
-        Map<String, List<String>> values = getExistingValuesMap(cl, SEARCH);
+        Map<Field, List<String>> values = getExistingValuesMap(cl, SEARCH);
         List<T> list = repository.getAllByFields(cl, values);
         if (list.isEmpty()) throw new NoModelWithSuchParametersException(values.toString());
         return list;
     }
 
-    public static <T extends Model> Map<String, List<String>> getExistingValuesMap(Class<T> cl, AppController.Action action) throws IOException {
+    public <T extends Model> Map<Field, List<String>> getExistingValuesMap(Class<T> cl, AppController.Action action) throws IOException {
         var fields = modelTypeMap.get(cl).getFields();
         var indexes = getIndexes(action, fields);
         return getValues(fields, indexes);
     }
 
-    public static <T extends Model> Map<String, String> getNewValuesMap(Class<T> cl, AppController.Action action) throws IOException {
+    public static <T extends Model> Map<Field, String> getNewValuesMap(Class<T> cl, AppController.Action action) throws IOException {
         var fields = modelTypeMap.get(cl).getFields();
         var indexes = getIndexes(action, fields);
         return IntStream.range(0, fields.length)
                 .filter(indexes::contains)
                 .mapToObj(i -> fields[i])
-                .collect(Collectors.toMap(Object::toString, f -> f.valueFromUser().toString()));
+                .collect(Collectors.toMap(Function.identity(), f -> f.valueFromUser().toString()));
     }
 
-    private static Map<String, List<String>> getValues(Field[] fields, List<Integer> indexes) {
-        Pattern pattern = Pattern.compile("^\\s?.+(\\s.+)*$");
-        Map<String, List<String>> map = new HashMap<>();
+    protected Map<Field, List<String>> getValues(Field[] fields, List<Integer> indexes) {
+        Map<Field, List<String>> map = new HashMap<>();
         IntStream.range(0, fields.length)
                 .filter(indexes::contains)
                 .mapToObj(i -> fields[i])
-                .forEachOrdered(f -> {
-                    try {
-                        map.put(f.toString(),
-                                Arrays.stream(
-                                        askStringWhileDoesNotMatchToPattern(
-                                                pattern,
-                                                "Enter value(s). Example for name:name1 name2"
-                                        ).split("\\s")).toList()
-                        );
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .forEachOrdered(f -> map.put(f, getValues(f)));
         return map;
     }
 
+    static List<String> getValues(Field f) {
+        List<String> values = new ArrayList<>();
+        try {
+            do {
+                values.add(f.valueFromUser().toString());
+            } while (inputEqualsYes("Enter another value for field " + f + "?"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return values;
+    }
 
     protected abstract <T extends Model> Optional<T> getById();
 

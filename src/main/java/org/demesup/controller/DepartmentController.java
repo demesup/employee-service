@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static org.utils.Read.readPositiveNumber;
-import static org.utils.Utils.listWithTitle;
+import static org.utils.Utils.listInSeparatedLines;
 
 @Slf4j
 public class DepartmentController extends Controller {
@@ -29,7 +29,9 @@ public class DepartmentController extends Controller {
 
     @Override
     public void read() {
-        log.debug(listWithTitle(repository.getAll(Department.class)));
+        log.debug(listInSeparatedLines
+                (repository.getAll(Department.class).stream().map(Department::moreInfo).toList()),
+                "Department");
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.demesup.repository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.demesup.model.Model;
+import org.demesup.model.field.Field;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -25,6 +26,7 @@ public class Repository {
         Transaction transaction = session.beginTransaction();
         try {
             session.persist(model);
+            transaction.commit();
             log.info(model + " is saved");
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
@@ -43,12 +45,12 @@ public class Repository {
         }
     }
 
-    public <T extends Model> void updateAll(Class<T> cl, Map<String, String> newValues) {
+    public <T extends Model> void updateAll(Class<T> cl, Map<Field, String> newValues) {
         Session session = session();
         Transaction transaction = session.beginTransaction();
         String setPart = getSetPart(cl, newValues);
         try {
-            session.createQuery(setPart, cl)
+            session.createNativeQuery(setPart, cl)
                     .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
                     .executeUpdate();
             transaction.commit();
@@ -59,14 +61,13 @@ public class Repository {
     }
 
     public <T extends Model> void updateAllByFields(Class<T> cl,
-                                                    Map<String, List<String>> oldValues,
-                                                    Map<String, String> newValues) {
+                                                    Map<Field, List<String>> oldValues,
+                                                    Map<Field, String> newValues) {
         Session session = session();
         Transaction transaction = session.beginTransaction();
-        String setPart = getSetPart(cl, newValues);
-        var query = getStrQuery(oldValues, setPart);
+        String strQuery = getStrQuery(oldValues, getSetPart(cl, newValues) + " where ", "c.");
         try {
-            session.createQuery(query, cl)
+            session.createNativeQuery(strQuery, cl)
                     .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
                     .executeUpdate();
             transaction.commit();
@@ -103,16 +104,13 @@ public class Repository {
         return resultList;
     }
 
-    public <T extends Model> List<T> getAllByFields(Class<T> cl, Map<String, List<String>> values) {
+    public <T extends Model> List<T> getAllByFields(Class<T> cl, Map<Field, List<String>> values) {
         List<T> results = new ArrayList<>();
         Session session = session();
         Transaction transaction = session.beginTransaction();
-        var query = getStrQuery(values, queryStartMap.get(SEARCH).apply(cl));
+        String strQuery = getStrQuery(values, queryStartMap.get(SEARCH).apply(cl), "");
         try {
-            results = session.createQuery(query, cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
-                    .getResultList();
-
+            results = session.createNativeQuery(strQuery, cl).getResultList();
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
@@ -120,12 +118,26 @@ public class Repository {
         return results;
     }
 
+     /*In getAllByFields(...) can be also used:
+                  var builder = session.getCriteriaBuilder();
+                  JpaCriteriaQuery<T> criteriaQuery = builder.createQuery(cl);
+                  Root<T> root = criteriaQuery.from(cl);
+                  Predicate[] predicates = getPredicates(values, root);
+                  results = session.createQuery(criteriaQuery.where(predicates)).getResultList();
+
+    private static <T extends Model> Predicate[] getPredicates(Map<String, List<String>> values, Root<T> root) {
+        Predicate[] predicates = new Predicate[values.size()];
+        AtomicInteger i = new AtomicInteger(0);
+        values.forEach((k, v) -> predicates[i.getAndIncrement()] = root.get(k.toLowerCase()).in(v));
+        return predicates;
+    }
+     */
+
     public <T extends Model> void delete(T model) {
         Session session = session();
         Transaction transaction = session.beginTransaction();
         try {
             session.remove(model);
-
             transaction.commit();
             log.info(model + " is deleted");
         } catch (Exception e) {
@@ -137,8 +149,7 @@ public class Repository {
         Session session = session();
         Transaction transaction = session.beginTransaction();
         try {
-            session.createQuery("delete from " + cl.getSimpleName(), cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
+            session.createNativeQuery("truncate table " + cl.getSimpleName(), cl)
                     .executeUpdate();
             transaction.commit();
             log.info("All " + cl.getSimpleName() + "s are deleted");
@@ -147,12 +158,12 @@ public class Repository {
         }
     }
 
-    public <T extends Model> void deleteAllByFields(Class<T> cl, Map<String, List<String>> values) {
+    public <T extends Model> void deleteAllByFields(Class<T> cl, Map<Field, List<String>> values) {
         Session session = session();
         Transaction transaction = session.beginTransaction();
-        var query = getStrQuery(values, queryStartMap.get(DELETE).apply(cl));
+        var query = getStrQuery(values, queryStartMap.get(DELETE).apply(cl), "c.");
         try {
-            session.createQuery(query, cl)
+            session.createNativeQuery(query, cl)
                     .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
                     .executeUpdate();
             transaction.commit();
@@ -162,19 +173,33 @@ public class Repository {
         }
     }
 
-    private static <T extends Model> String getSetPart(Class<T> cl, Map<String, String> newValues) {
-        return newValues.entrySet().stream().map(v -> "c." + v.getKey().toLowerCase() + " = " + v.getValue()).collect(Collectors.joining(",", "update " + cl.getSimpleName() + " c set ", ""));
+    private static <T extends Model> String getSetPart(Class<T> cl, Map<Field, String> newValues) {
+        return newValues.entrySet().stream()
+                .map(v -> "c." + v.getKey().toString().toLowerCase() + " = '" + v.getValue() + "'")
+                .collect(Collectors.joining(",", "update " + cl.getSimpleName() + " c set ", ""));
     }
 
 
-    private String getStrQuery(Map<String, List<String>> fieldValueMap, String prefix) {
+    private String getStrQuery(Map<Field, List<String>> fieldValueMap, String prefix, String l) {
         return fieldValueMap.entrySet().stream()
                 .map(entry ->
-                        entry.getKey().toLowerCase() + " " + entry.getValue().stream().collect(Collectors.joining(
+                        l + entry.getKey().toString().toLowerCase() + " " + entry.getValue().stream().collect(Collectors.joining(
                                 "','",
                                 "in('",
                                 "')")))
                 .collect(Collectors.joining(
-                        " and ", prefix, ""));
+                        " and ", prefix.endsWith("\\s") ? prefix : prefix + " ", ""));
+    }
+
+    public <T extends Model> void saveAll(List<T> list) {
+        Session session = session();
+        Transaction transaction = session.beginTransaction();
+        try {
+            list.forEach(session::persist);
+            transaction.commit();
+            log.info(list + " is saved");
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+        }
     }
 }

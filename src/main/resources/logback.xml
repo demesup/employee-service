@@ -8,7 +8,7 @@
         <encoder>
             <pattern><![CDATA[
              %-5level - %msg%n
-      ]]></pattern>
+]]></pattern>
         </encoder>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
@@ -24,13 +24,14 @@
         </encoder>
     </appender>
 
-<!--    <logger name="org.hibernate.type" level="warn" />-->
-<!--    <logger name="org.hibernate" level="warn" />-->
-<!--    <logger name="org.hibernate." level="warn" />-->
+    <logger name="org.hibernate.type" level="warn"/>
+    <logger name="org.hibernate" level="warn"/>
+    <logger name="org.hibernate." level="warn"/>
+    <logger name="org.demesup" level="debug"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="FILE" />
+        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>

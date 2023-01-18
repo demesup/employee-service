@@ -99,6 +99,11 @@ public enum EmployeeField implements Field {
                 } else throw new RuntimeException(e);
             }
         }
+
+        @Override
+        public String toString() {
+            return "DEP_ID";
+        }
     };
     final Function<Employee, Object> getter;
 

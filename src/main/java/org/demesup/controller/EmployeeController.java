@@ -4,12 +4,16 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.demesup.model.Employee;
 import org.demesup.model.field.EmployeeField;
+import org.demesup.model.field.Field;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+import java.util.stream.IntStream;
 
 import static org.utils.Read.readPositiveNumber;
-import static org.utils.Utils.listWithTitle;
+import static org.utils.Utils.listInSeparatedLines;
 
 @Slf4j
 public class EmployeeController extends Controller {
@@ -28,7 +32,30 @@ public class EmployeeController extends Controller {
 
     @Override
     public void read() {
-        log.debug(listWithTitle(repository.getAll(Employee.class)));
+        log.debug(listInSeparatedLines(repository.getAll(Employee.class)));
+    }
+
+    @Override
+    protected Map<Field, List<String>> getValues(Field[] fields, List<Integer> indexes) {
+        Map<Field, List<String>> map = new HashMap<>();
+        IntStream.range(0, fields.length)
+                .filter(indexes::contains)
+                .mapToObj(i -> fields[i])
+                .forEachOrdered(f -> {
+                    if (EmployeeField.DEPARTMENT.equals(f)) {
+                        try {
+                            map.put(EmployeeField.DEPARTMENT,
+                                    List.of(new BufferedReader(new InputStreamReader(System.in)).readLine().split("\\s")));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else if (EmployeeField.GENDER.equals(f)) {
+                        map.put(f, f.valueFromUser());
+                    } else {
+                        map.put(f, getValues(f));
+                    }
+                });
+        return map;
     }
 
     @Override
@@ -47,4 +74,5 @@ public class EmployeeController extends Controller {
     protected Optional<Employee> getOneByFields() {
         return getOneByFields(Employee.class);
     }
+
 }
