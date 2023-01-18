@@ -14,7 +14,6 @@ import static org.demesup.model.field.EmployeeField.*;
 
 public class RepositoryTest extends TestCase {
     Repository repository = new Repository();
-
     @Test
     public void testSaveEmployee() {
         Employee employee = getTestEmployee();
@@ -45,7 +44,7 @@ public class RepositoryTest extends TestCase {
 
         department.setLocation("lalalalal");
         repository.update(department);
-        repository.delete(department);
+//        repository.delete(department);
     }
 
     @Test
@@ -60,9 +59,7 @@ public class RepositoryTest extends TestCase {
 
     @Test
     public void testGetById() {
-        Department department = getTestDepartment();
-        repository.save(department);
-        repository.getById(Department.class, department.getDep_id());
+        System.out.println(repository.getById(Department.class, repository.getAll(Department.class).get(0).getDep_id()));
     }
 
     @Test
@@ -73,7 +70,9 @@ public class RepositoryTest extends TestCase {
 
     @Test
     public void testGetAllByFields() {
-        System.out.println(repository.getAllByFields(Employee.class, Map.of(GENDER, List.of("female"))));
+        System.out.println(repository.getAllByFields(
+                Department.class,
+                Map.of(LOCATION, List.of("HAWAII"))));
     }
 
     @Test

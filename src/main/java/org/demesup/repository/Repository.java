@@ -1,16 +1,16 @@
 package org.demesup.repository;
 
+import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.demesup.NotEntityClassException;
 import org.demesup.model.Model;
 import org.demesup.model.field.Field;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.demesup.AppController.Action.*;
@@ -20,102 +20,53 @@ import static org.demesup.ModelType.modelTypeMap;
 @Getter
 @Slf4j
 public class Repository {
+    Session session = session();
 
     public <T extends Model> void save(T model) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        try {
-            session.persist(model);
-            transaction.commit();
-            log.info(model + " is saved");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        checkClass(model.getClass());
+        execute(() -> session.persist(model), model + " is saved");
     }
 
     public <T extends Model> void update(T model) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        try {
-            session.merge(model);
-            transaction.commit();
-            log.info(model + " is updated");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        checkClass(model.getClass());
+        execute(() -> session.merge(model), model + " is updated");
     }
 
     public <T extends Model> void updateAll(Class<T> cl, Map<Field, String> newValues) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
+        checkClass(cl);
         String setPart = getSetPart(cl, newValues);
-        try {
-            session.createNativeQuery(setPart, cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
-                    .executeUpdate();
-            transaction.commit();
-            log.info("All " + cl.getSimpleName() + "s are updated");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        execute(() -> session.createNativeQuery(setPart, cl)
+                .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
+                .executeUpdate(), "All " + cl.getSimpleName() + "s are updated");
     }
 
     public <T extends Model> void updateAllByFields(Class<T> cl,
                                                     Map<Field, List<String>> oldValues,
                                                     Map<Field, String> newValues) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
+        checkClass(cl);
         String strQuery = getStrQuery(oldValues, getSetPart(cl, newValues) + " where ", "c.");
-        try {
-            session.createNativeQuery(strQuery, cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
-                    .executeUpdate();
-            transaction.commit();
-            log.info("All departments with " + oldValues + " are updated to " + newValues);
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        execute(() -> session.createNativeQuery(strQuery, cl)
+                .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
+                .executeUpdate(), "All departments with " + oldValues + " are updated to " + newValues);
     }
 
     public <T extends Model> Optional<T> getById(Class<T> cl, long id) {
-        T model = null;
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        try {
-            model = session.find(cl, id, modelTypeMap.get(cl).getHints());
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
-        return Optional.ofNullable(model);
+        checkClass(cl);
+        return execute(() -> session.find(cl, id, modelTypeMap.get(cl).getHints()));
     }
 
     public <T extends Model> List<T> getAll(Class<T> cl) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        List<T> resultList = new ArrayList<>();
-        try {
-            resultList = session.createQuery("FROM " + cl.getSimpleName(), cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints()).getResultList();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
-        return resultList;
+        checkClass(cl);
+        return execute(() ->
+                session.createQuery("FROM " + cl.getSimpleName(), cl)
+                        .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
+                        .getResultList()).orElse(new LinkedList<>());
     }
 
     public <T extends Model> List<T> getAllByFields(Class<T> cl, Map<Field, List<String>> values) {
-        List<T> results = new ArrayList<>();
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
+        checkClass(cl);
         String strQuery = getStrQuery(values, queryStartMap.get(SEARCH).apply(cl), "");
-        try {
-            results = session.createNativeQuery(strQuery, cl).getResultList();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
-        return results;
+        return execute(() -> session.createNativeQuery(strQuery, cl).getResultList()).orElse(new LinkedList<>());
     }
 
      /*In getAllByFields(...) can be also used:
@@ -134,43 +85,22 @@ public class Repository {
      */
 
     public <T extends Model> void delete(T model) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        try {
-            session.remove(model);
-            transaction.commit();
-            log.info(model + " is deleted");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        checkClass(model.getClass());
+        execute(() -> session.remove(model), model + " is deleted");
     }
 
     public <T extends Model> void deleteAll(Class<T> cl) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
-        try {
-            session.createNativeQuery("truncate table " + cl.getSimpleName(), cl)
-                    .executeUpdate();
-            transaction.commit();
-            log.info("All " + cl.getSimpleName() + "s are deleted");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        checkClass(cl);
+        execute(() -> session.createNativeQuery("truncate table " + cl.getSimpleName(), cl)
+                .executeUpdate(), "All " + cl.getSimpleName() + "s are deleted");
     }
 
     public <T extends Model> void deleteAllByFields(Class<T> cl, Map<Field, List<String>> values) {
-        Session session = session();
-        Transaction transaction = session.beginTransaction();
+        checkClass(cl);
         var query = getStrQuery(values, queryStartMap.get(DELETE).apply(cl), "c.");
-        try {
-            session.createNativeQuery(query, cl)
-                    .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
-                    .executeUpdate();
-            transaction.commit();
-            log.info("All " + cl.getSimpleName() + "s with " + values + " are deleted");
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-        }
+        execute(() -> session.createNativeQuery(query, cl)
+                .setHint("jakarta.persistence.fetchgraph", modelTypeMap.get(cl).getHints())
+                .executeUpdate(), "All " + cl.getSimpleName() + "s with " + values + " are deleted");
     }
 
     private static <T extends Model> String getSetPart(Class<T> cl, Map<Field, String> newValues) {
@@ -192,14 +122,35 @@ public class Repository {
     }
 
     public <T extends Model> void saveAll(List<T> list) {
-        Session session = session();
+        if (list.isEmpty()) return;
+        checkClass(list.get(0).getClass());
+        execute(() -> list.forEach(session::persist), list + " is saved");
+    }
+
+    private void execute(Runnable task, String messageIfCommitted) {
         Transaction transaction = session.beginTransaction();
         try {
-            list.forEach(session::persist);
+            task.run();
             transaction.commit();
-            log.info(list + " is saved");
+            log.info(messageIfCommitted);
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
         }
+    }
+
+    private <T> Optional<T> execute(Supplier<T> task) {
+        Transaction transaction = session.beginTransaction();
+        try {
+            T result = task.get();
+            transaction.commit();
+            return Optional.ofNullable(result);
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+        }
+        return Optional.empty();
+    }
+
+    private <T extends Model> void checkClass(Class<T> cl) {
+        if (!cl.isAnnotationPresent(Entity.class)) throw new NotEntityClassException(cl);
     }
 }

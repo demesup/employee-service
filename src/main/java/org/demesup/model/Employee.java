@@ -6,8 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.demesup.model.field.Gender;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.Parameter;
 
 @Entity
 @Data
@@ -18,9 +20,18 @@ import org.hibernate.annotations.OnDeleteAction;
 @RequiredArgsConstructor
 @NoArgsConstructor
 public class Employee implements Model {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "emp_id")
+    @GeneratedValue(generator = "sequence-generator")
+    @GenericGenerator(
+            name = "sequence-generator",
+            strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
+            parameters = {
+                    @Parameter(name = "sequence_name", value = "user_sequence"),
+                    @Parameter(name = "initial_value", value = "1"),
+                    @Parameter(name = "increment_size", value = "1")
+            }
+    )
     private int empId;
     @Basic
     @Column(name = "name", nullable = false, length = 30)
